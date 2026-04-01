@@ -2,7 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
+from enum import Enum
 
+class RiskLevel(Enum):
+    Low = "low"
+    Medium = "medium"
+    High = "high"
 
 class CalculationInput(BaseModel):
     firstName: str
@@ -10,9 +15,12 @@ class CalculationInput(BaseModel):
     city: str
     age: int = Field(ge=18, le=100)
     insuranceType: Literal['Car']|Literal['Home']|Literal['Travel']
-    vehicleProductionYear: int | None = Field(default=None)
+    vehicleProductionYear: int | None = Field(default=None, ge=1886)
     coverageAmount: float = Field(ge=1000)
     additionalOptions: bool
+
+class CalculationResponse(BaseModel):
+    riskLevel: RiskLevel
 
 app = FastAPI()
 app.add_middleware(
@@ -25,7 +33,7 @@ app.add_middleware(
 @app.post(
     "/calculate-risk",
 )
-def read_assets(data: CalculationInput) -> dict[Literal["riskLevel"],Literal['low']|Literal['medium']|Literal['high']]:
+def read_assets(data: CalculationInput) -> CalculationResponse:
     insuranceTypeFactor = None
     riskLevelCategory = None
 
@@ -40,11 +48,11 @@ def read_assets(data: CalculationInput) -> dict[Literal["riskLevel"],Literal['lo
     riskLevel = (data.age / 10) + (data.coverageAmount / 10000) + insuranceTypeFactor
 
     if riskLevel <= 5:
-        riskLevelCategory = 'low'
+        riskLevelCategory = RiskLevel.Low
     elif riskLevel > 5 and riskLevel < 8:
-        riskLevelCategory = 'medium'
+        riskLevelCategory = RiskLevel.Medium
     else:
-        riskLevelCategory = 'high'
+        riskLevelCategory = RiskLevel.High
 
-    return {"riskLevel": riskLevelCategory}
+    return CalculationResponse(riskLevel=riskLevelCategory)
 

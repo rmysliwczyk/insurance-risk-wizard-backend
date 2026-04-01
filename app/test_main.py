@@ -18,7 +18,7 @@ def test_calculate_risk_returns_correct_calculation():
             "additionalOptions": "false",
         },
     )
-    assert response.json()["riskLevel"] == "medium"
+    assert response.json()['riskLevel'] == "medium"
 
 
 def test_calculate_risk_returns_error_for_underage():
